@@ -37,7 +37,7 @@ The public address is https://pkincir.github.io/ once deployment completes.
 The `.nojekyll` file lets GitHub serve the already-generated HTML directly.
 
 The same `index.html` and `assets/` work at https://people.ee.ethz.ch/~pkincir/.
-After connecting to the D-ITET account, back up any existing website and place
+Connect with `ssh pkincir@login.ee.ethz.ch`, back up any existing website, and place
 these files in `~/public_html/`. Keep the asset directory structure unchanged.
 The web server needs traversal permission on the home and website directories,
 and read permission on public website files, as described in the D-ITET tutorial.
