@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pkincir.github.io/sitemap.xml

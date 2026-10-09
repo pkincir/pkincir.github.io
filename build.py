@@ -1,7 +1,63 @@
 import html
+import json
 import os
 
 from pybtex.database.input import bibtex
+
+SITE_URL = "https://pkincir.github.io/"
+ASCII_NAME = "Pelin Kincir"
+
+def get_seo_head(name):
+    full_name = ' '.join(name)
+    title = f"{full_name} ({ASCII_NAME}) | Computer Vision, ETH Zurich"
+    description = (
+        f"{full_name} ({ASCII_NAME}): ETH Zurich MSc student and visiting researcher "
+        "at the Broad Institute of MIT and Harvard. Computer vision, 3D perception and AR."
+    )
+    image_url = SITE_URL + 'assets/img/profile.jpg'
+    person = {
+        '@type': 'Person',
+        '@id': SITE_URL + '#person',
+        'name': full_name,
+        'alternateName': [ASCII_NAME, 'pkincir'],
+        'givenName': name[0],
+        'familyName': name[1],
+        'url': SITE_URL,
+        'image': image_url,
+        'email': 'mailto:pkincir@mit.edu',
+        'jobTitle': "Master's Student",
+        'affiliation': [
+            {'@type': 'CollegeOrUniversity', 'name': 'ETH Zurich', 'url': 'https://ethz.ch/en.html'},
+            {'@type': 'ResearchOrganization', 'name': 'Broad Institute of MIT and Harvard', 'url': 'https://www.broadinstitute.org/'},
+        ],
+        'alumniOf': {'@type': 'CollegeOrUniversity', 'name': 'Boğaziçi University', 'url': 'https://bogazici.edu.tr/en'},
+        'knowsAbout': ['Computer Vision', '3D Perception', 'Augmented Reality', 'Machine Learning', 'Signal Processing'],
+        'sameAs': ['https://github.com/pkincir', 'https://www.linkedin.com/in/pelin-k%C4%B1nc%C4%B1r-992779190/'],
+    }
+    profile = {
+        '@context': 'https://schema.org',
+        '@type': 'ProfilePage',
+        '@id': SITE_URL + '#profile',
+        'url': SITE_URL,
+        'mainEntity': person,
+    }
+    # Escape '<' so even a future value containing '</script>' stays inside JSON.
+    structured_data = json.dumps(profile, ensure_ascii=False, indent=2).replace('<', '\\u003c')
+    escape = lambda value: html.escape(value, quote=True)
+    return f"""<title>{escape(title)}</title>
+  <meta name="description" content="{escape(description)}">
+  <link rel="canonical" href="{escape(SITE_URL)}">
+  <meta property="og:type" content="profile">
+  <meta property="og:url" content="{escape(SITE_URL)}">
+  <meta property="og:title" content="{escape(full_name)}">
+  <meta property="og:description" content="{escape(description)}">
+  <meta property="og:image" content="{escape(image_url)}">
+  <meta property="profile:first_name" content="{escape(name[0])}">
+  <meta property="profile:last_name" content="{escape(name[1])}">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">
+{structured_data}
+  </script>"""
 
 def get_personal_data():
     name = ["Pelin", "Kıncır"]
@@ -181,7 +237,7 @@ def get_entries_html(filename, get_entry):
 
 def get_profile_html(path='assets/img/profile.jpg'):
     if os.path.exists(path):
-        return f"""<img src="{versioned(path)}" class="img-thumbnail profile-img" width="280px" alt="Profile picture">"""
+        return f"""<img src="{versioned(path)}" class="img-thumbnail profile-img" width="280px" alt="Pelin Kıncır ({html.escape(ASCII_NAME, quote=True)})">"""
     print(f'Profile photo {path} not found, showing a placeholder.')
     return """<div class="img-thumbnail placeholder-box profile-placeholder"><i class="fa-solid fa-user"></i></div>"""
 
@@ -210,7 +266,7 @@ def get_index_html():
   <!-- Required meta tags -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="{name[0] + ' ' + name[1]}: Master's student at ETH Zurich working on computer vision, 3D perception, and AR.">
+  {get_seo_head(name)}
 
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
@@ -232,7 +288,6 @@ def get_index_html():
     }}
   </style>
 
-  <title>{name[0] + ' ' + name[1]}</title>
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 
@@ -243,7 +298,7 @@ def get_index_html():
             <div class="col-md-10">
                 <div class="row" style="margin-top: 3em;">
                     <div class="col-sm-12" style="margin-bottom: 1em;">
-                    <h3 class="display-4" style="text-align: center;"><span style="font-weight: bold;">{name[0]}</span> {name[1]}</h3>
+                    <h1 class="display-4" style="text-align: center;"><span style="font-weight: bold;">{name[0]}</span> {name[1]}</h1>
                     </div>
                     <br>
                     <div class="col-md-9" style="">
@@ -285,6 +340,20 @@ def write_index_html(filename='index.html'):
     with open(filename, 'w', encoding='utf-8') as f:
         f.write(s)
     print(f'Written index content to {filename}.')
+    output_dir = os.path.dirname(filename) or '.'
+    # Omit optional lastmod rather than reporting a new content date on every rebuild.
+    sitemap = f'''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>{html.escape(SITE_URL, quote=True)}</loc>
+  </url>
+</urlset>
+'''
+    with open(os.path.join(output_dir, 'sitemap.xml'), 'w', encoding='utf-8') as f:
+        f.write(sitemap)
+    with open(os.path.join(output_dir, 'robots.txt'), 'w', encoding='utf-8') as f:
+        f.write(f'User-agent: *\nAllow: /\n\nSitemap: {SITE_URL}sitemap.xml\n')
+    print('Written sitemap.xml and robots.txt.')
 
 if __name__ == '__main__':
     write_index_html('index.html')
